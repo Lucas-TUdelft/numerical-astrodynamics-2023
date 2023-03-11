@@ -34,9 +34,10 @@ from tudatpy.kernel.numerical_simulation import propagation_setup
 current_directory = os.getcwd()
 
 # # student number: 1244779 --> 1244ABC
-A = XXXX
-B = XXXX
-C = XXXX
+# student number is: 5009235
+A = 2
+B = 3
+C = 5
 
 simulation_start_epoch = 35.4 * constants.JULIAN_YEAR + A * 7.0 * constants.JULIAN_DAY + B * constants.JULIAN_DAY + C * constants.JULIAN_DAY / 24.0
 simulation_end_epoch = simulation_start_epoch + 344.0 * constants.JULIAN_DAY / 24.0
@@ -50,7 +51,7 @@ spice.load_standard_kernels()
 spice.load_kernel( current_directory + "/juice_mat_crema_5_1_150lb_v01.bsp" );
 
 # Create settings for celestial bodies
-bodies_to_create = XXXX
+bodies_to_create = ['Ganymede']
 global_frame_origin = 'Ganymede'
 global_frame_orientation = 'ECLIPJ2000'
 body_settings = environment_setup.get_default_body_settings(
@@ -77,7 +78,10 @@ central_bodies = ['Ganymede']
 
 # Define accelerations acting on vehicle.
 acceleration_settings_on_vehicle = dict(
-    XXXX
+    Ganymede =
+    [
+        propagation_setup.acceleration.point_mass_gravity( ),
+    ]
 )
 
 # Create global accelerations dictionary.
@@ -100,7 +104,9 @@ system_initial_state = spice.get_body_cartesian_state_at_epoch(
     ephemeris_time = simulation_start_epoch )
 
 # Define required outputs
-dependent_variables_to_save = XXXX
+dependent_variables_to_save = [
+    propagation_setup.dependent_variable.keplerian_state('JUICE','Ganymede')
+]
 
 # Create numerical integrator settings.
 fixed_step_size = 10.0
@@ -162,7 +168,59 @@ kepler_elements = np.vstack(list(dependent_variables.values()))
 time = dependent_variables.keys()
 time_days = [ t / constants.JULIAN_DAY - simulation_start_epoch / constants.JULIAN_DAY for t in time ]
 
+fig, ((ax1, ax2), (ax3, ax4), (ax5, ax6)) = plt.subplots(3, 2, figsize=(9, 12))
+fig.suptitle('Change in Kepler elements over the course of the propagation.')
 
+# initial values
+a_0 = kepler_elements[0][0] / 1e3
+e_0 = kepler_elements[0][1]
+i_0 = np.rad2deg(kepler_elements[0][2])
+omega_0 = np.rad2deg(kepler_elements[0][3])
+raan_0 = np.rad2deg(kepler_elements[0][4])
+theta_0 = np.rad2deg(kepler_elements[0][5])
+
+# Semi-major Axis
+semi_major_axis = kepler_elements[:,0] / 1e3
+semi_major_axis_diff = semi_major_axis - a_0
+ax1.plot(time_days, semi_major_axis_diff)
+ax1.set_ylabel('Difference in Semi-major axis [km]')
+
+# Eccentricity
+eccentricity = kepler_elements[:,1]
+eccentricity_diff = eccentricity - e_0
+ax2.plot(time_days, eccentricity_diff)
+ax2.set_ylabel('Difference in Eccentricity [-]')
+
+# Inclination
+inclination = np.rad2deg(kepler_elements[:,2])
+inclination_diff = inclination - i_0
+ax3.plot(time_days, inclination_diff)
+ax3.set_ylabel('Difference in Inclination [deg]')
+
+# Argument of Periapsis
+argument_of_periapsis = np.rad2deg(kepler_elements[:,3])
+argument_of_periapsis_diff = argument_of_periapsis - omega_0
+ax4.plot(time_days, argument_of_periapsis_diff)
+ax4.set_ylabel('Difference in Argument of Periapsis [deg]')
+
+# Right Ascension of the Ascending Node
+raan = np.rad2deg(kepler_elements[:,4])
+raan_diff = raan - raan_0
+ax5.plot(time_days, raan_diff)
+ax5.set_ylabel('Difference in RAAN [deg]')
+
+# True Anomaly
+true_anomaly = np.rad2deg(kepler_elements[:,5])
+ax6.scatter(time_days, true_anomaly, s=1)
+ax6.set_ylabel('Difference in True Anomaly [deg]')
+ax6.set_yticks(np.arange(0, 361, step=60))
+
+for ax in fig.get_axes():
+    ax.set_xlabel('Time [days]')
+    ax.set_xlim([min(time_days), max(time_days)])
+    ax.grid()
+plt.tight_layout()
+plt.show()
 
 
 
