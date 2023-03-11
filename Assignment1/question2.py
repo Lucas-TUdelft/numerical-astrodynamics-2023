@@ -246,48 +246,42 @@ time_days = [ t / constants.JULIAN_DAY - simulation_start_epoch / constants.JULI
 fig, ((ax1, ax2), (ax3, ax4), (ax5, ax6)) = plt.subplots(3, 2, figsize=(9, 12))
 fig.suptitle('Change in Kepler elements over the course of the propagation.')
 
-# initial values
-a_0 = dep_var[0][0] / 1e3
-e_0 = dep_var[0][1]
-i_0 = np.rad2deg(dep_var[0][2])
-omega_0 = np.rad2deg(dep_var[0][3])
-raan_0 = np.rad2deg(dep_var[0][4])
-theta_0 = np.rad2deg(dep_var[0][5])
+
 
 # Semi-major Axis
 semi_major_axis = dep_var[:,0] / 1e3
-semi_major_axis_diff = semi_major_axis - a_0
+semi_major_axis_diff = semi_major_axis
 ax1.plot(time_days, semi_major_axis_diff)
-ax1.set_ylabel('Difference in Semi-major axis [km]')
+ax1.set_ylabel('Semi-major axis [km]')
 
 # Eccentricity
 eccentricity = dep_var[:,1]
-eccentricity_diff = eccentricity - e_0
+eccentricity_diff = eccentricity
 ax2.plot(time_days, eccentricity_diff)
-ax2.set_ylabel('Difference in Eccentricity [-]')
+ax2.set_ylabel('Eccentricity [-]')
 
 # Inclination
 inclination = np.rad2deg(dep_var[:,2])
-inclination_diff = inclination - i_0
+inclination_diff = inclination
 ax3.plot(time_days, inclination_diff)
-ax3.set_ylabel('Difference in Inclination [deg]')
+ax3.set_ylabel('Inclination [deg]')
 
 # Argument of Periapsis
 argument_of_periapsis = np.rad2deg(dep_var[:,3])
-argument_of_periapsis_diff = argument_of_periapsis - omega_0
+argument_of_periapsis_diff = argument_of_periapsis
 ax4.plot(time_days, argument_of_periapsis_diff)
-ax4.set_ylabel('Difference in Argument of Periapsis [deg]')
+ax4.set_ylabel('Argument of Periapsis [deg]')
 
 # Right Ascension of the Ascending Node
 raan = np.rad2deg(dep_var[:,4])
-raan_diff = raan - raan_0
+raan_diff = raan
 ax5.plot(time_days, raan_diff)
-ax5.set_ylabel('Difference in RAAN [deg]')
+ax5.set_ylabel('RAAN [deg]')
 
 # True Anomaly
 true_anomaly = np.rad2deg(dep_var[:,5])
 ax6.scatter(time_days, true_anomaly, s=1)
-ax6.set_ylabel('Difference in True Anomaly [deg]')
+ax6.set_ylabel('True Anomaly [deg]')
 ax6.set_yticks(np.arange(0, 361, step=60))
 
 for ax in fig.get_axes():
