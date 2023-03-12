@@ -226,7 +226,7 @@ with open('C:\\Users\\lucas\\PycharmProjects\\numerical-astrodynamics-2023\\Assi
         x = float(parameters1[1])
         y = float(parameters1[2])
         z = float(parameters1[3])
-        r_mag = np.sqrt(((x**2) + (y**2) + (z**2)))
+        r_mag = np.asarray([x,y,z])
         r_mag1.append(r_mag)
 
 f1.close()
