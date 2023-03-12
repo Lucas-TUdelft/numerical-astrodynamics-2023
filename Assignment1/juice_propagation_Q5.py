@@ -2,7 +2,7 @@
 #
 # # Numerical Astrodynamics 2022/2023
 #
-# # Assignment 1 - Propagation Settings
+# # Assignment 1, Question 5 - Propagation Settings
 #
 ###########################################################################
 
@@ -21,22 +21,76 @@ http://tudat.tudelft.nl/LICENSE.
 import os
 
 import numpy as np
-import scipy as sp
 from matplotlib import pyplot as plt
 
 from tudatpy.io import save2txt
 from tudatpy.kernel import constants
 from tudatpy.kernel.interface import spice
 from tudatpy.kernel import numerical_simulation
+from tudatpy.kernel.numerical_simulation import environment
 from tudatpy.kernel.numerical_simulation import environment_setup
 from tudatpy.kernel.numerical_simulation import propagation_setup
+from tudatpy.kernel.astro import element_conversion
+
+
+class ThrustGuidance:
+
+    def __init__(self,
+                 maximum_thrust: float, # Maximum thrust value that is to be used
+                 true_anomaly_threshold: float, # Limiting value of true anomaly before and after node at which thrust should be on/off
+                 bodies: environment.SystemOfBodies):
+        self.maximum_thrust = maximum_thrust
+        self.true_anomaly_threshold = true_anomaly_threshold
+        self.bodies = bodies
+
+    def compute_thrust_direction(self, current_time: float):
+
+        # Check if computation is to be done. NOTE TO STUDENTS: ALL CALCULATION OF THRUST DIRECTION MUST BE INSIDE
+        # THE FOLLOWING BLOCK
+        if( current_time == current_time ):
+
+            # Retrieve current JUICE Cartesian state w.r.t. Ganymede from environment
+            current_cartesian_state = self.bodies.get_body( 'JUICE' ).state - self.bodies.get_body( 'Ganymede' ).state
+            gravitational_parameter = self.bodies.get_body( 'Ganymede' ).gravitational_parameter
+            current_keplerian_state = element_conversion.cartesian_to_keplerian( current_cartesian_state, gravitational_parameter )
+
+            # Compute and return current thrust direction (3x1 vector)
+            thrust_direction = XXXX
+            XXXX
+
+            # Here, the direction of the thrust (in a frame with inertial orientation; same as current_cartesian_state)
+            # should be returned as a numpy unit vector (3x1)
+            return XXXX
+
+        # If no computation is to be done, return zeros
+        else
+            return np.zeros([3,1])
+    def compute_thrust_magnitude(self, current_time: float):
+
+        # Check if computation is to be done. NOTE TO STUDENTS: ALL CALCULATION OF THRUST MAGNITUDE MUST BE INSIDE
+        # THE FOLLOWING BLOCK
+        if( current_time == current_time ):
+
+            # Retrieve current JUICE Cartesian  and Keplerian state w.r.t. Ganymede from environment
+            current_cartesian_state = self.bodies.get_body( 'JUICE' ).state - self.bodies.get_body( 'Ganymede' ).state
+            gravitational_parameter = self.bodies.get_body( 'Ganymede' ).gravitational_parameter
+            current_keplerian_state = element_conversion.cartesian_to_keplerian( current_cartesian_state, gravitational_parameter )
+
+            # Compute and return current thrust magnitude (scalar)
+            thrust_magnitude = XXXX
+            XXXX
+
+            # Here, the value of the thrust magnitude (in Newtons, as a single floating point variable), should be returned
+            return XXXX
+        # If no computation is to be done, return zeros
+        else:
+            return 0.0
+
+
+
 
 # Retrieve current directory
 current_directory = os.getcwd()
-
-# Change between case i and ii here:
-# note: run question1.py before this script to obtain the necessary data file
-case = 1.0
 
 # # student number: 1244779 --> 1244ABC
 # student number is: 5009235
@@ -56,15 +110,11 @@ spice.load_standard_kernels()
 spice.load_kernel( current_directory + "/juice_mat_crema_5_1_150lb_v01.bsp" );
 
 # Create settings for celestial bodies
-bodies_to_create = ['Ganymede', 'Jupiter']
+bodies_to_create = XXXX
 global_frame_origin = 'Ganymede'
 global_frame_orientation = 'ECLIPJ2000'
 body_settings = environment_setup.get_default_body_settings(
     bodies_to_create, global_frame_origin, global_frame_orientation)
-
-density_scale_height = 40.0 * 10**3
-density_at_zero_altitude = 2 * 10**(-9)
-body_settings.get('Ganymede').atmosphere_settings = environment_setup.atmosphere.exponential(density_scale_height, density_at_zero_altitude)
 
 # Create environment
 bodies = environment_setup.create_system_of_bodies(body_settings)
@@ -76,16 +126,33 @@ bodies = environment_setup.create_system_of_bodies(body_settings)
 # Create vehicle object
 bodies.create_empty_body( 'JUICE' )
 
-bodies.get("JUICE").mass = 2000.0
 
-# Aero
-reference_area = 100.0
-drag_coefficient = 1.2
-aero_coefficient_settings = environment_setup.aerodynamic_coefficients.constant(
-    reference_area, [drag_coefficient, 0, 0]
-)
-environment_setup.add_aerodynamic_coefficient_interface(
-    bodies, "JUICE", aero_coefficient_settings)
+###########################################################################
+# CREATE THRUST MODEL #####################################################
+###########################################################################
+
+# Create thrust guidance object (e.g. object that calculates direction/magnitude of thrust)
+thrust_magnitude = 1.0
+true_anomaly_threshold = XXXX
+thrust_guidance_object = ThrustGuidance( thrust_magnitude, true_anomaly_threshold, bodies )
+
+# Create engine model (default JUICE-fixed pointing direction) with custom thrust magnitude calculation
+constant_specific_impulse = 300.0
+thrust_magnitude_settings = (
+    propagation_setup.thrust.custom_thrust_magnitude_fixed_isp(
+        thrust_guidance_object.compute_thrust_magnitude,
+        constant_specific_impulse ) )
+environment_setup.add_engine_model(
+    'JUICE', 'MainEngine', thrust_magnitude_settings, bodies )
+
+# Create vehicle rotation model such that thrust points in required direction in inertial frame
+thrust_direction_function = thrust_guidance_object.compute_thrust_direction
+rotation_model_settings = environment_setup.rotation_model.custom_inertial_direction_based(
+    thrust_direction_function,
+    "JUICE-fixed",
+    "ECLIPJ2000" )
+environment_setup.add_rotation_model( bodies, "JUICE", rotation_model_settings)
+
 
 ###########################################################################
 # CREATE ACCELERATIONS ####################################################
@@ -96,26 +163,10 @@ bodies_to_propagate = ['JUICE']
 central_bodies = ['Ganymede']
 
 # Define accelerations acting on vehicle.
+acceleration_settings_on_vehicle = dict(
+    XXXX
+)
 
-if case == 1.0:
-    acceleration_settings_on_vehicle = dict(
-        Ganymede =
-        [
-            propagation_setup.acceleration.point_mass_gravity( ),
-        ],
-        Jupiter =
-        [
-            propagation_setup.acceleration.spherical_harmonic_gravity(4, 0),
-        ]
-    )
-elif case == 2.0:
-    acceleration_settings_on_vehicle = dict(
-        Ganymede =
-        [
-            propagation_setup.acceleration.point_mass_gravity( ),
-            propagation_setup.acceleration.aerodynamic()
-        ]
-    )
 # Create global accelerations dictionary.
 acceleration_settings = {'JUICE': acceleration_settings_on_vehicle}
 
@@ -136,16 +187,7 @@ system_initial_state = spice.get_body_cartesian_state_at_epoch(
     ephemeris_time = simulation_start_epoch )
 
 # Define required outputs
-if case == 1.0:
-    dependent_variables_to_save = [
-        propagation_setup.dependent_variable.single_acceleration_norm(
-            propagation_setup.acceleration.spherical_harmonic_gravity_type, 'JUICE', 'Jupiter'),
-    ]
-elif case == 2.0:
-    dependent_variables_to_save = [
-        propagation_setup.dependent_variable.single_acceleration_norm(
-            propagation_setup.acceleration.aerodynamic_type, 'JUICE', 'Ganymede'),
-    ]
+dependent_variables_to_save = XXXX
 
 # Create numerical integrator settings.
 fixed_step_size = 10.0
@@ -153,9 +195,9 @@ integrator_settings = propagation_setup.integrator.runge_kutta_4(
     fixed_step_size
 )
 
-# Create propagation settings.
+# Create translational propagation settings.
 termination_settings = propagation_setup.propagator.time_termination( simulation_end_epoch )
-propagator_settings = propagation_setup.propagator.translational(
+translational_propagator_settings = propagation_setup.propagator.translational(
     central_bodies,
     acceleration_models,
     bodies_to_propagate,
@@ -166,7 +208,12 @@ propagator_settings = propagation_setup.propagator.translational(
     output_variables = dependent_variables_to_save
 )
 
-propagator_settings.print_settings.print_initial_and_final_conditions = True
+# Create mass propagator settings
+XXXX
+
+# Create combined mass and translational dynamics propagator settings
+XXXX
+propagator_settings = ...
 
 
 ###########################################################################
@@ -187,102 +234,30 @@ dependent_variables = propagation_results.dependent_variable_history
 ###########################################################################
 # SAVE RESULTS ############################################################
 ###########################################################################
-if case == 1.0:
-    save2txt(solution=state_history,
-             filename='JUICEPropagationHistory_Q3.1.dat',
-             directory='./'
-             )
 
-    save2txt(solution=dependent_variables,
-             filename='JUICEPropagationHistory_DependentVariables_Q3.1.dat',
-             directory='./'
-             )
-elif case == 2.0:
-    save2txt(solution=state_history,
-             filename='JUICEPropagationHistory_Q3.2.dat',
-             directory='./'
-             )
+save2txt(solution=state_history,
+         filename='JUICEPropagationHistory_Q1.dat',
+         directory='./'
+         )
 
-    save2txt(solution=dependent_variables,
-             filename='JUICEPropagationHistory_DependentVariables_Q3.2.dat',
-             directory='./'
-             )
+save2txt(solution=dependent_variables,
+         filename='JUICEPropagationHistory_DependentVariables_Q1.dat',
+         directory='./'
+         )
 
 ###########################################################################
 # PLOT RESULTS ############################################################
 ###########################################################################
 
 # Extract time and Kepler elements from dependent variables
-dep_var = np.vstack(list(dependent_variables.values()))
+kepler_elements = np.vstack(list(dependent_variables.values()))
 time = dependent_variables.keys()
 time_days = [ t / constants.JULIAN_DAY - simulation_start_epoch / constants.JULIAN_DAY for t in time ]
 
-# get unperturbed Cartesian position
-with open('C:\\Users\\lucas\\PycharmProjects\\numerical-astrodynamics-2023\\Assignment1\\JUICEPropagationHistory_Q1.dat') as f1:
-    content1 = f1.readlines()
-    r_mag1 = []
-    for line in content1:
-        parameters1 = line.split()
-        x = float(parameters1[1])
-        y = float(parameters1[2])
-        z = float(parameters1[3])
-        r_mag = np.asarray([x,y,z])
-        r_mag1.append(r_mag)
-
-f1.close()
-
-# get perturbed Cartesian position
-if case == 1.0:
-    with open('C:\\Users\\lucas\\PycharmProjects\\numerical-astrodynamics-2023\\Assignment1\\JUICEPropagationHistory_Q3.1.dat') as f2:
-        content2 = f2.readlines()
-        r_mag2 = []
-        for line in content2:
-            parameters2 = line.split()
-            x = float(parameters2[1])
-            y = float(parameters2[2])
-            z = float(parameters2[3])
-            r_mag = np.asarray([x,y,z])
-            r_mag2.append(r_mag)
-
-    f2.close()
-
-elif case == 2.0:
-    with open('C:\\Users\\lucas\\PycharmProjects\\numerical-astrodynamics-2023\\Assignment1\\JUICEPropagationHistory_Q3.2.dat') as f2:
-        content2 = f2.readlines()
-        r_mag2 = []
-        for line in content2:
-            parameters2 = line.split()
-            x = float(parameters2[1])
-            y = float(parameters2[2])
-            z = float(parameters2[3])
-            r_mag = np.asarray([x,y,z])
-            r_mag2.append(r_mag)
-
-    f2.close()
-
-delta_r = []
-for i in range(len(r_mag1)):
-    r_diff = r_mag1[i] - r_mag2[i]
-    r_diff_mag = np.sqrt(((r_diff[0])**2) + ((r_diff[1])**2) + ((r_diff[2])**2))
-    delta_r.append(r_diff_mag)
-
-acc = []
-for i in range(len(dep_var)):
-    acc.append(dep_var[i][0])
-
-a_int = sp.integrate.cumulative_trapezoid(acc)
-epsilon = []
-for i in range(len(delta_r) - 1):
-    e_i = delta_r[i + 1] / a_int[i]
-    epsilon.append(e_i)
 
 
-plt.plot(time_days[1:],epsilon)
-plt.xlim([min(time_days), max(time_days)])
-plt.xlabel('Time [days]')
-plt.ylabel('Acceleration Effectiveness [-]')
-plt.yscale('log')
-plt.show()
+
+
 
 
 
