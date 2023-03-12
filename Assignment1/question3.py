@@ -35,6 +35,7 @@ from tudatpy.kernel.numerical_simulation import propagation_setup
 current_directory = os.getcwd()
 
 # Change between case i and ii here:
+# note: run question1.py before this script to obtain the necessary data file
 case = 1.0
 
 # # student number: 1244779 --> 1244ABC
@@ -279,7 +280,7 @@ for i in range(len(delta_r) - 1):
 plt.plot(time_days[1:],epsilon)
 plt.xlim([min(time_days), max(time_days)])
 plt.xlabel('Time [days]')
-plt.ylabel('Acceleration Norm [m/s$^2$]')
+plt.ylabel('Acceleration Effectiveness [-]')
 plt.yscale('log')
 plt.show()
 
