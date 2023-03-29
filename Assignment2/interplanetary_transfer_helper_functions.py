@@ -23,10 +23,11 @@ from tudatpy.kernel.astro import two_body_dynamics
 from tudatpy.kernel.astro import element_conversion
 
 # Define departure/arrival epoch - in seconds since J2000
-departure_epoch = XXXX
-time_of_flight = XXXX
+# 5009235    4    7508.753233    205.2821586
+departure_epoch = 7508.753233 * 86400
+time_of_flight = 205.2821586 * 86400
 arrival_epoch = departure_epoch + time_of_flight
-target_body = XXXX
+target_body = 'Mars'
 global_frame_orientation = 'ECLIPJ2000'
 fixed_step_size = 3600.0
 
@@ -184,8 +185,8 @@ def get_lambert_arc_history(
     """
 
     lambert_arc_states = dict()
-    for state in simulation_result:
-        lambert_arc_states[state] = lambert_arc_ephemeris.cartesian_state(state)
+    for time in simulation_result:
+        lambert_arc_states[time] = lambert_arc_ephemeris.cartesian_state(time)
 
     return lambert_arc_states
 
@@ -332,7 +333,7 @@ def get_sensitivity_parameter_set(
     if use_rsw_acceleration == True:
         parameter_settings.append(estimation_setup.parameter.constant_empirical_acceleration_terms("Spacecraft", "Sun"))
 
-    return estimation_setup.create_parameters_to_estimate(parameter_settings, bodies, propagator_settings)
+    return estimation_setup.create_parameter_set(parameter_settings, bodies, propagator_settings)
 
 
 ################ HELPER FUNCTIONS: MODIFY ########################################
@@ -361,8 +362,50 @@ def get_unperturbed_propagator_settings(
     Propagation settings of the unperturbed trajectory.
     """
 
+    simulation_start_epoch = initial_time
+
     # Create propagation settings.
-    propagator_settings = XXXX
+    bodies_to_propagate = ['Spacecraft']
+    central_bodies = ['Sun']
+
+    acceleration_settings_on_vehicle = dict(
+        Sun =
+        [
+            propagation_setup.acceleration.point_mass_gravity(),
+        ]
+    )
+
+    # Create global accelerations dictionary.
+    acceleration_settings = {'Spacecraft': acceleration_settings_on_vehicle}
+
+    # Create acceleration models.
+    acceleration_models = propagation_setup.create_acceleration_models(
+        bodies, acceleration_settings, bodies_to_propagate, central_bodies)
+
+    # Define required outputs
+    dependent_variables_to_save = [
+        propagation_setup.dependent_variable.relative_position('Earth', 'Sun'),
+        propagation_setup.dependent_variable.relative_position('Mars', 'Sun')
+    ]
+
+    system_initial_state = initial_state
+
+    fixed_step_size = 3600.0
+    integrator_settings = propagation_setup.integrator.runge_kutta_4(
+        fixed_step_size
+    )
+
+    termination_settings = propagation_setup.propagator.time_termination(final_time)
+    propagator_settings = propagation_setup.propagator.translational(
+    central_bodies,
+    acceleration_models,
+    bodies_to_propagate,
+    system_initial_state,
+    simulation_start_epoch,
+    integrator_settings,
+    termination_settings,
+    output_variables = dependent_variables_to_save
+)
 
     return propagator_settings
 
@@ -437,7 +480,15 @@ def create_simulation_bodies( ) -> environment.SystemOfBodies:
 
     """
 
-    bodies = XXXX
+    bodies_to_create = ['Sun','Earth','Mars']
+    global_frame_origin = 'Sun'
+    global_frame_orientation = 'ECLIPJ2000'
+    body_settings = environment_setup.get_default_body_settings(
+        bodies_to_create, global_frame_origin, global_frame_orientation)
+
+    bodies = environment_setup.create_system_of_bodies(body_settings)
+
+    bodies.create_empty_body('Spacecraft')
 
     return bodies
 
