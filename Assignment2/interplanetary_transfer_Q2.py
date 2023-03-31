@@ -39,9 +39,18 @@ cases = ['case_i', 'case_ii', 'case_iii']
 # Run propagation for each of cases i-iii
 for case in cases:
 
+    if case == 'case_i':
+        buffer_dep = 0.0
+        buffer_arr = 0.0
+    if case == 'case_ii':
+        buffer_dep = 3600
+        buffer_arr = 3600
+    if case == 'case_iii':
+        buffer_dep = 71 * 3600 # spacecraft is in sphere of influence at index 70, so 71 time steps after departure it leaves
+        buffer_arr = 62 * 3600 # spacecraft in in sphere of influence at index 4866, so 62 time steps before the end it is about to enter
     # Define the initial and final propagation time for the current case
-    departure_epoch_with_buffer = XXXX
-    arrival_epoch_with_buffer = XXXX
+    departure_epoch_with_buffer = departure_epoch + buffer_dep
+    arrival_epoch_with_buffer = departure_epoch + time_of_flight - buffer_arr
 
     # Perform propagation
     dynamics_simulator = XXXX

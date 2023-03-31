@@ -443,7 +443,38 @@ def get_perturbed_propagator_settings(
 
 
     # Define accelerations acting on vehicle.
-    acceleration_settings_on_spacecraft = XXXX
+    acceleration_settings_on_spacecraft = dict(
+        Sun =
+        [
+            propagation_setup.acceleration.point_mass_gravity(),
+            propagation_setup.acceleration.cannonball_radiation_pressure()
+        ],
+        Earth =
+        [
+            propagation_setup.acceleration.point_mass_gravity()
+        ],
+        Mars =
+        [
+            propagation_setup.acceleration.point_mass_gravity()
+        ],
+        Venus =
+        [
+            propagation_setup.acceleration.point_mass_gravity()
+        ],
+        Moon =
+        [
+            propagation_setup.acceleration.point_mass_gravity()
+        ],
+        Jupiter =
+        [
+            propagation_setup.acceleration.point_mass_gravity()
+        ],
+        Saturn =
+        [
+            propagation_setup.acceleration.point_mass_gravity()
+        ]
+    )
+
 
     # DO NOT MODIFY, and keep AFTER creation of acceleration_settings_on_spacecraft
     # (line is added for compatibility with question 4)
@@ -451,14 +482,45 @@ def get_perturbed_propagator_settings(
         acceleration_settings_on_spacecraft["Sun"].append(
             propagation_setup.acceleration.empirical(rsw_acceleration_magnitude))
 
+    # Create global accelerations dictionary.
+    acceleration_settings = {'Spacecraft': acceleration_settings_on_vehicle}
+
+    # Create acceleration models.
+    acceleration_models = propagation_setup.create_acceleration_models(
+        bodies, acceleration_settings, bodies_to_propagate, central_bodies)
+
+    # Define required outputs
+    dependent_variables_to_save = [
+        propagation_setup.dependent_variable.relative_position('Earth', 'Sun'),
+        propagation_setup.dependent_variable.relative_position('Mars', 'Sun')
+    ]
+
+    system_initial_state = initial_state
+
+    fixed_step_size = 3600.0
     # If propagation is backwards in time, make initial time step negative
     if initial_time > final_time:
         signed_fixed_step_size = -fixed_step_size
     else:
         signed_fixed_step_size = fixed_step_size
 
+    integrator_settings = propagation_setup.integrator.runge_kutta_4(
+         signed_fixed_step_size
+    )
+
+    termination_settings = propagation_setup.propagator.time_termination(final_time)
+
     # Create propagation settings.
-    propagator_settings = XXXX
+    propagator_settings = propagation_setup.propagator.translational(
+        central_bodies,
+        acceleration_models,
+        bodies_to_propagate,
+        system_initial_state,
+        simulation_start_epoch,
+        integrator_settings,
+        termination_settings,
+        output_variables=dependent_variables_to_save
+    )
 
     return propagator_settings
 
@@ -480,7 +542,7 @@ def create_simulation_bodies( ) -> environment.SystemOfBodies:
 
     """
 
-    bodies_to_create = ['Sun','Earth','Mars']
+    bodies_to_create = ['Sun','Earth','Mars','Venus','Moon','Jupiter','Saturn']
     global_frame_origin = 'Sun'
     global_frame_orientation = 'ECLIPJ2000'
     body_settings = environment_setup.get_default_body_settings(
@@ -489,6 +551,17 @@ def create_simulation_bodies( ) -> environment.SystemOfBodies:
     bodies = environment_setup.create_system_of_bodies(body_settings)
 
     bodies.create_empty_body('Spacecraft')
+
+    bodies.get("Spacecraft").mass = 1000.0
+    # Solar pressure
+    reference_area_radiation = 20.0
+    radiation_pressure_coefficient = 1.2
+    occulting_bodies = []
+    radiation_pressure_settings = environment_setup.radiation_pressure.cannonball(
+        "Sun", reference_area_radiation, radiation_pressure_coefficient, occulting_bodies
+    )
+    environment_setup.add_radiation_pressure_interface(
+        bodies, "Spacecraft", radiation_pressure_settings)
 
     return bodies
 

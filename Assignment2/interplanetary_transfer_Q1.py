@@ -135,3 +135,24 @@ plt.xlabel("Time (s) since departure")
 plt.ylabel("Difference between numerical propagation and Lambert targeter")
 plt.legend()
 plt.show()
+
+'''
+# code to determine during what time steps the spacecraft is in each of the spheres of influence
+for i in range(len(x_states_lb)):
+    r_sc = np.asarray([x_states_lb[i],y_states_lb[i],z_states_lb[i]])
+    r_E = np.asarray([Earth_x[i],Earth_y[i],Earth_z[i]])
+    r_M = np.asarray([Mars_x[i],Mars_y[i],Mars_z[i]])
+    delta_Earth_vec = (r_sc - r_E)
+    delta_Earth = np.sqrt((((delta_Earth_vec[0])**2) + ((delta_Earth_vec[1])**2) + ((delta_Earth_vec[2])**2)))
+    SOI_E = 0.929 * 10**9
+    if delta_Earth <= SOI_E:
+        print('Earth: ',i)
+    delta_Mars_vec = (r_sc - r_M)
+    delta_Mars = np.sqrt((((delta_Mars_vec[0]) ** 2) + ((delta_Mars_vec[1]) ** 2) + ((delta_Mars_vec[2]) ** 2)))
+    SOI_M = 0.578 * 10 ** 9
+    if delta_Mars <= SOI_M:
+        print('Mars: ',i)
+print(len(lambert_history))
+'''
+
+
