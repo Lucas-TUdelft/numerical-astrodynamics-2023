@@ -441,9 +441,14 @@ def get_perturbed_propagator_settings(
     Propagation settings of the perturbed trajectory.
     """
 
+    simulation_start_epoch = initial_time
+
+    # Create propagation settings.
+    bodies_to_propagate = ['Spacecraft']
+    central_bodies = ['Sun']
 
     # Define accelerations acting on vehicle.
-    acceleration_settings_on_spacecraft = dict(
+    acceleration_settings_on_vehicle = dict(
         Sun =
         [
             propagation_setup.acceleration.point_mass_gravity(),
@@ -491,8 +496,7 @@ def get_perturbed_propagator_settings(
 
     # Define required outputs
     dependent_variables_to_save = [
-        propagation_setup.dependent_variable.relative_position('Earth', 'Sun'),
-        propagation_setup.dependent_variable.relative_position('Mars', 'Sun')
+        propagation_setup.dependent_variable.total_acceleration('Spacecraft')
     ]
 
     system_initial_state = initial_state
